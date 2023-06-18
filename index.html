@@ -10,9 +10,6 @@
 
 <body>
   <div class="container mx-auto p-8">
-    <div class="date-picker mb-4">
-      <input type="date" id="selectedDate" value="">
-    </div>
     <div id="driverList"></div>
     <div class="driver-operations mt-8">
       <input type="text" id="newDriverName" placeholder="输入新司机名称" class="border p-2 rounded">
@@ -24,7 +21,6 @@
 
   <script>
     let drivers = [];
-    let schedules = {};
 
     const timeSlots = [
       { start: '00:00', end: '01:00' },
@@ -54,18 +50,14 @@
     ];
 
     const driverListElem = document.getElementById('driverList');
-    const selectedDateElem = document.getElementById('selectedDate');
     const newDriverNameElem = document.getElementById('newDriverName');
     const addDriverButton = document.getElementById('addDriverButton');
     const removeDriverButton = document.getElementById('removeDriverButton');
     const saveButton = document.getElementById('saveButton');
 
-    let selectedDate = null;
-
-    function updateDriverSchedule(date) {
+    function updateDriverSchedule() {
       drivers.forEach(driver => {
-        const scheduleKey = getDateKey(date);
-        driver.schedule = schedules[scheduleKey] && schedules[scheduleKey][driver.name] ? schedules[scheduleKey][driver.name] : getDriverSchedule();
+        driver.schedule = getDriverSchedule();
       });
       renderDriverList();
     }
@@ -78,27 +70,10 @@
       return schedule;
     }
 
-    function getDateKey(date) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-
-    function selectDate() {
-      selectedDate = new Date(selectedDateElem.value);
-      updateDriverSchedule(selectedDate);
-    }
-
     function toggleTimeSlot(driverIndex, timeSlotIndex) {
       const driver = drivers[driverIndex];
-      const scheduleKey = getDateKey(selectedDate);
-      const schedule = schedules[scheduleKey] && schedules[scheduleKey][driver.name] ? schedules[scheduleKey][driver.name] : getDriverSchedule();
+      const schedule = driver.schedule;
       schedule[timeSlotIndex] = !schedule[timeSlotIndex];
-      if (!schedules[scheduleKey]) {
-        schedules[scheduleKey] = {};
-      }
-      schedules[scheduleKey][driver.name] = schedule;
       renderDriverList();
     }
 
@@ -117,15 +92,14 @@
     }
 
     function saveData() {
-      const scheduleKey = getDateKey(selectedDate);
-      localStorage.setItem('schedules', JSON.stringify(schedules));
+      localStorage.setItem('drivers', JSON.stringify(drivers));
       alert('保存成功');
     }
 
     function loadData() {
-      const savedSchedules = localStorage.getItem('schedules');
-      if (savedSchedules) {
-        schedules = JSON.parse(savedSchedules);
+      const savedDrivers = localStorage.getItem('drivers');
+      if (savedDrivers) {
+        drivers = JSON.parse(savedDrivers);
         renderDriverList();
       }
     }
@@ -154,17 +128,17 @@
       timeSlots.forEach((timeSlot, timeSlotIndex) => {
         const rowElem = document.createElement('tr');
         const timeSlotCellElem = document.createElement('td');
-        timeSlotCellElem.textContent = `${timeSlot.start}-${timeSlot.end}`;
+        timeSlotCellElem.textContent = `${timeSlot.start} - ${timeSlot.end}`;
         rowElem.appendChild(timeSlotCellElem);
         drivers.forEach((driver, driverIndex) => {
           const driverCellElem = document.createElement('td');
-          driverCellElem.classList.add('border', 'px-4', 'py-2');
-          if (driver.schedule && driver.schedule[timeSlotIndex]) {
-            driverCellElem.textContent = '忙碌';
-            driverCellElem.classList.add('bg-red-500', 'text-white');
-          } else {
-            driverCellElem.textContent = '空闲';
+          driverCellElem.classList.add('text-center');
+          if (driver.schedule[timeSlotIndex]) {
             driverCellElem.classList.add('bg-green-500', 'text-white');
+            driverCellElem.textContent = '忙碌';
+          } else {
+            driverCellElem.classList.add('bg-red-500', 'text-white');
+            driverCellElem.textContent = '空闲';
           }
           driverCellElem.classList.add('cursor-pointer');
           driverCellElem.addEventListener('click', () => {
@@ -179,18 +153,9 @@
       driverListElem.appendChild(tableElem);
     }
 
-    selectedDateElem.addEventListener('change', selectDate);
     addDriverButton.addEventListener('click', addDriver);
     removeDriverButton.addEventListener('click', removeDriver);
     saveButton.addEventListener('click', saveData);
-
-    // 初始化为今天的日期
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    selectedDateElem.value = `${year}-${month}-${day}`;
-    selectDate();
 
     // 加载已保存的数据
     loadData();
