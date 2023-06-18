@@ -18,6 +18,7 @@
       <input type="text" id="newDriverName" placeholder="输入新司机名称" class="border p-2 rounded">
       <button id="addDriverButton" class="bg-green-500 text-white px-4 py-2 rounded">添加司机</button>
       <button id="removeDriverButton" class="bg-red-500 text-white px-4 py-2 rounded">删除司机</button>
+      <button id="saveButton" class="bg-blue-500 text-white px-4 py-2 rounded">保存</button>
     </div>
   </div>
 
@@ -56,6 +57,7 @@
     const newDriverNameElem = document.getElementById('newDriverName');
     const addDriverButton = document.getElementById('addDriverButton');
     const removeDriverButton = document.getElementById('removeDriverButton');
+    const saveButton = document.getElementById('saveButton');
 
     let selectedDate = null;
 
@@ -84,7 +86,6 @@
       const schedule = driver.schedule;
       schedule[timeSlotIndex] = !schedule[timeSlotIndex];
       renderDriverList();
-      saveDriversToStorage();
     }
 
     function addDriver() {
@@ -93,14 +94,25 @@
         drivers.push({ name: newDriverName, schedule: [] });
         renderDriverList();
         newDriverNameElem.value = '';
-        saveDriversToStorage();
       }
     }
 
     function removeDriver(driverIndex) {
       drivers.splice(driverIndex, 1);
       renderDriverList();
-      saveDriversToStorage();
+    }
+
+    function saveData() {
+      localStorage.setItem('drivers', JSON.stringify(drivers));
+      alert('保存成功');
+    }
+
+    function loadData() {
+      const savedDrivers = localStorage.getItem('drivers');
+      if (savedDrivers) {
+        drivers = JSON.parse(savedDrivers);
+        renderDriverList();
+      }
     }
 
     function renderDriverList() {
@@ -152,20 +164,10 @@
       driverListElem.appendChild(tableElem);
     }
 
-    function saveDriversToStorage() {
-      localStorage.setItem('drivers', JSON.stringify(drivers));
-    }
-
-    function loadDriversFromStorage() {
-      const storedDrivers = localStorage.getItem('drivers');
-      if (storedDrivers) {
-        drivers = JSON.parse(storedDrivers);
-      }
-    }
-
     selectedDateElem.addEventListener('change', selectDate);
     addDriverButton.addEventListener('click', addDriver);
     removeDriverButton.addEventListener('click', removeDriver);
+    saveButton.addEventListener('click', saveData);
 
     // 初始化为今天的日期
     const today = new Date();
@@ -175,9 +177,8 @@
     selectedDateElem.value = `${year}-${month}-${day}`;
     selectDate();
 
-    // 页面加载时从本地存储中读取司机列表
-    loadDriversFromStorage();
-    renderDriverList();
+    // 加载已保存的数据
+    loadData();
   </script>
 </body>
 
